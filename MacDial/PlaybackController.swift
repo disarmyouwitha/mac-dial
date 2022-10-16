@@ -37,32 +37,104 @@ func HIDPostAuxKey(key: Int32, modifiers: [NSEvent.ModifierFlags], _repeat: Int 
 
 }
 
+    /*
+     #define NX_KEYTYPE_SOUND_UP        0
+     #define NX_KEYTYPE_SOUND_DOWN      1
+     #define NX_KEYTYPE_BRIGHTNESS_UP   2
+     #define NX_KEYTYPE_BRIGHTNESS_DOWN 3
+     #define NX_KEYTYPE_CAPS_LOCK       4
+     #define NX_KEYTYPE_HELP            5
+     #define NX_POWER_KEY               6
+     #define NX_KEYTYPE_MUTE            7
+     #define NX_UP_ARROW_KEY            8
+     #define NX_DOWN_ARROW_KEY          9
+     #define NX_KEYTYPE_NUM_LOCK        10
 
-class PlaybackController : Controller {
+     #define NX_KEYTYPE_CONTRAST_UP     11
+     #define NX_KEYTYPE_CONTRAST_DOWN   12
+     #define NX_KEYTYPE_LAUNCH_PANEL    13
+     #define NX_KEYTYPE_EJECT           14
+     #define NX_KEYTYPE_VIDMIRROR       15
+
+     #define NX_KEYTYPE_PLAY            16
+     #define NX_KEYTYPE_NEXT            17
+     #define NX_KEYTYPE_PREVIOUS        18
+     #define NX_KEYTYPE_FAST            19
+     #define NX_KEYTYPE_REWIND          20
+
+     #define NX_KEYTYPE_ILLUMINATION_UP    21
+     #define NX_KEYTYPE_ILLUMINATION_DOWN    22
+     #define NX_KEYTYPE_ILLUMINATION_TOGGLE    23
+     */
+
+class PlaybackController : Controller
+{
+    var last_click = Date().timeIntervalSince1970
+    var click_down = Date().timeIntervalSince1970
     
-    var lastClick = Date().timeIntervalSince1970
-    
-    func onDown() {
+    func onDown()
+    {
+        click_down = Date().timeIntervalSince1970
+     
+        // SEND HAPTIC FOR DOWNCLICK? (Does mute make haptic happen? If so, Can send nokey key? lol)
         
+        //HIDPostAuxKey(key: NX_KEYTYPE_MUTE, modifiers: [], _repeat: 1)
     }
     
-    func onUp() {
-        
-        let clickDelay = Date().timeIntervalSince1970 - lastClick
-        
-        // Next song on double click
-        if (clickDelay < 0.5) {
-            // Undo pause sent on first click
-            HIDPostAuxKey(key: NX_KEYTYPE_PLAY, modifiers: [], _repeat: 1)
+    func onUp()
+    {
+        if(last_click != click_down)
+        {
+            var click_delay = Date().timeIntervalSince1970 - click_down
             
-            HIDPostAuxKey(key: NX_KEYTYPE_NEXT, modifiers: [])
-        }
-        else { // Play / Pause on single click
+            // LONG CLICK:
+            if (click_delay > 1.0)
+            {
+                // Get modes:
+                let mode_list = UserDefaults.standard.string(forKey: "mode_list")!
+                let mode_split = mode_list.components(separatedBy: "|")
+                
+                var sel = 0
+                for i in stride(from: 0, to: mode_split.count, by: 1)
+                {
+                    let mode: String = mode_split[i]
+                    
+                    // MODE FOUND:
+                    if(mode=="playback")
+                    {
+                        if(i+1 < mode_split.count)
+                        {
+                            sel = i+1
+                        }
+                    }
+                }
+
+                // Sound up when changing to Scrolling Mode
+                HIDPostAuxKey(key: NX_KEYTYPE_SOUND_UP, modifiers: [], _repeat: 1)
+                
+                //  Change Mode to Scroll
+                UserDefaults.standard.setValue(mode_split[sel], forKey: "mode")
+                
+                // Set Mode in Status bar App (?) Need to pass StatusBarController into here.
+            }
             
-            HIDPostAuxKey(key: NX_KEYTYPE_PLAY, modifiers: [], _repeat: 1)
+            // Working.. uncomment after debug session above:
+            
+            /*
+            click_delay = Date().timeIntervalSince1970 - last_click
+            
+            // DOUBLE CLICK:
+            if (click_delay < 0.25)
+            {
+                // vol down on double click. (refine timer)
+                HIDPostAuxKey(key: NX_KEYTYPE_SOUND_DOWN, modifiers: [], _repeat: 1)
+            }
+            
+            // reset state variables:
+            last_click = Date().timeIntervalSince1970
+            click_down = last_click
+             */
         }
-        
-        lastClick = Date().timeIntervalSince1970
     }
     
     
@@ -81,6 +153,4 @@ class PlaybackController : Controller {
             break
         }
     }
-    
-    
 }

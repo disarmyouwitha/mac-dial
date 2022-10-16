@@ -100,6 +100,8 @@ extension NSMenu {
         
         self.addItem(items.separator3)
         self.addItem(items.quit)
+        
+        UserDefaults.standard.setValue("scrolling|playback", forKey: "mode_list")
     }
 }
 
@@ -115,7 +117,10 @@ class StatusBarController
         let title = NSMenuItem.init(title: "Mac Dial")
         let connectionStatus = NSMenuItem.init()
         let separator = NSMenuItem.separator()
+        
         let scrollMode = ControllerOptionItem.init(title: "Scroll mode", mode: .scrolling, controller: ScrollController())
+        // ^^^ pass status controller into scroll controller so I can change menu settings?
+        
         let playbackMode = ControllerOptionItem.init(title: "Playback mode", mode: .playback, controller: PlaybackController())
         let separator2 = NSMenuItem.separator()
         let wheelSensitivity = NSMenuItem.init(title: "Wheel Sensitivity")
@@ -294,6 +299,7 @@ class StatusBarController
             option.action = #selector(setScrollDirection(sender:))
             option.selected = option.option == scrollDirection
         }
+        scrollDirection = scrollDirection // trigger set which updates dial
         
         for option in menuItems.hapticsModeOptions {
             option.target = self
