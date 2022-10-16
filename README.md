@@ -1,5 +1,21 @@
 # Mac Dial
 
+## What's New?
+- I have forked `jerrywoohu/mac-dial` branch and merged feature-haptics into main. I've tested this and think it should be part of the main repo.
+- Button press in Media mode will mute instead of pause/play (just experimenting)
+
+## What would I like to do?
+I am just hopping into the code now, and new to swift.. but a lot of this code seems very accessible.
+- Brightness mode (just experiment with creating a new mode)
+- Long-press functionality (?)
+- Switching between modes on long-press (or double click)
+- Settings per mode, like.. Scroll mode: Haptics off; Media mode: Haptics on.
+- Ability to configure press, rotate, rotate while pressed, and double click for each mode.
+
+(I will see how things go at each step.)
+
+## ORIGINAL GITHUB TEXT:
+
 macOS support for the Surface Dial. The surface dial can be paired with macOS but any input results in invalid mouse inputs on macOS. This app reads the raw data from the dial and translates them to correct mouse and media inputs for macOS.
 
 ## Building
