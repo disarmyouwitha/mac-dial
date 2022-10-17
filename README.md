@@ -2,17 +2,14 @@
 
 ## What's New?
 - I have forked `jerrywoohu/mac-dial` branch and merged feature-haptics into main. I've tested this and think it should be part of the main repo.
-- Button press in Media mode will mute instead of pause/play (just experimenting)
+- Added Mode switching by holding down button for longer than 1 second.
+- Double-click is implemented, but has a bug where it triggers single-click too. (single-click in Playback mode will Mute, and double-click will pause/play)
+- Also added click & rotate logic to control brightness in Playback mode
+- Experimenting with other uses: Scroll mode click will do a single alt+tab
 
 ## What would I like to do?
 I am just hopping into the code now, and new to swift.. but a lot of this code seems very accessible.
-- Brightness mode (just experiment with creating a new mode)
-- Long-press functionality (?)
-- Switching between modes on long-press (or double click)
-- Settings per mode, like.. Scroll mode: Haptics off; Media mode: Haptics on.
 - Ability to configure press, rotate, rotate while pressed, and double click for each mode.
-
-(I will see how things go at each step.)
 
 ## ORIGINAL GITHUB TEXT:
 
