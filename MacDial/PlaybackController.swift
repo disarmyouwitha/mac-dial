@@ -71,14 +71,15 @@ class PlaybackController : Controller
 {
     var last_click = Date().timeIntervalSince1970
     var click_down = Date().timeIntervalSince1970
+    var click_pressed = false
+    var rotating = false
     
     func onDown()
     {
         click_down = Date().timeIntervalSince1970
-     
-        // SEND HAPTIC FOR DOWNCLICK? (Does mute make haptic happen? If so, Can send nokey key? lol)
+        click_pressed = true
         
-        //HIDPostAuxKey(key: NX_KEYTYPE_MUTE, modifiers: [], _repeat: 1)
+        // SEND HAPTIC FOR DOWNCLICK?
     }
     
     func onUp()
@@ -88,69 +89,91 @@ class PlaybackController : Controller
             var click_delay = Date().timeIntervalSince1970 - click_down
             
             // LONG CLICK:
-            if (click_delay > 1.0)
+            if(rotating == false)
             {
-                // Get modes:
-                let mode_list = UserDefaults.standard.string(forKey: "mode_list")!
-                let mode_split = mode_list.components(separatedBy: "|")
                 
-                var sel = 0
-                for i in stride(from: 0, to: mode_split.count, by: 1)
+                if (click_delay > 100.0)
                 {
-                    let mode: String = mode_split[i]
+                    // Do nothing.
+                } else if (click_delay > 1.0)
+                {
+                    // Get modes:
+                    let mode_list = UserDefaults.standard.string(forKey: "mode_list")!
+                    let mode_split = mode_list.components(separatedBy: "|")
                     
-                    // MODE FOUND:
-                    if(mode=="playback")
+                    var sel = 0
+                    for i in stride(from: 0, to: mode_split.count, by: 1)
                     {
-                        if(i+1 < mode_split.count)
+                        let mode: String = mode_split[i]
+                        
+                        // MODE FOUND:
+                        if(mode=="playback")
                         {
-                            sel = i+1
+                            if(i+1 < mode_split.count)
+                            {
+                                sel = i+1
+                            }
                         }
                     }
+                    
+                    //  Change Mode to Scroll
+                    UserDefaults.standard.setValue(mode_split[sel], forKey: "mode")
+                    
+                    // Set Mode in Status bar App (?) Need to pass StatusBarController into here.
+                    
+                } else {
+                    click_delay = Date().timeIntervalSince1970 - last_click
+                    
+                    // DOUBLE CLICK: PLAY
+                    if (click_delay < 0.5)
+                    {
+                        // To unmute first click:
+                        HIDPostAuxKey(key: NX_KEYTYPE_MUTE, modifiers: [], _repeat: 1)
+                        
+                        HIDPostAuxKey(key: NX_KEYTYPE_PLAY, modifiers: [], _repeat: 1)
+                    } else {
+                        // SINGLE CLICK: MUTE
+                        HIDPostAuxKey(key: NX_KEYTYPE_MUTE, modifiers: [], _repeat: 1)
+                    }
+                    
+                    // reset state variables:
+                    last_click = Date().timeIntervalSince1970
+                    click_down = last_click
                 }
-
-                // Sound up when changing to Scrolling Mode
-                HIDPostAuxKey(key: NX_KEYTYPE_SOUND_UP, modifiers: [], _repeat: 1)
-                
-                //  Change Mode to Scroll
-                UserDefaults.standard.setValue(mode_split[sel], forKey: "mode")
-                
-                // Set Mode in Status bar App (?) Need to pass StatusBarController into here.
+                click_pressed = false
             }
-            
-            // Working.. uncomment after debug session above:
-            
-            /*
-            click_delay = Date().timeIntervalSince1970 - last_click
-            
-            // DOUBLE CLICK:
-            if (click_delay < 0.25)
-            {
-                // vol down on double click. (refine timer)
-                HIDPostAuxKey(key: NX_KEYTYPE_SOUND_DOWN, modifiers: [], _repeat: 1)
-            }
-            
-            // reset state variables:
-            last_click = Date().timeIntervalSince1970
-            click_down = last_click
-             */
         }
     }
     
     
     
-    func onRotate(_ rotation: Dial.Rotation,_ scrollDirection: Int) {
+    func onRotate(_ rotation: Dial.Rotation,_ scrollDirection: Int)
+    {
+        rotating = true
         
         let modifiers = [NSEvent.ModifierFlags.shift, NSEvent.ModifierFlags.option]
         
         switch (rotation) {
         case .Clockwise(let _repeat):
-            HIDPostAuxKey(key: NX_KEYTYPE_SOUND_UP, modifiers: modifiers, _repeat: _repeat)
+            if(click_pressed==true)
+            {
+                HIDPostAuxKey(key: NX_KEYTYPE_BRIGHTNESS_UP, modifiers: modifiers, _repeat: _repeat)
+            } else {
+                HIDPostAuxKey(key: NX_KEYTYPE_SOUND_UP, modifiers: modifiers, _repeat: _repeat)
+            }
             break
         case .CounterClockwise(let _repeat):
-            HIDPostAuxKey(key: NX_KEYTYPE_SOUND_DOWN, modifiers: modifiers, _repeat: _repeat)
-
+            if(click_pressed==true)
+            {
+                HIDPostAuxKey(key: NX_KEYTYPE_BRIGHTNESS_DOWN, modifiers: modifiers, _repeat: _repeat)
+            } else {
+                HIDPostAuxKey(key: NX_KEYTYPE_SOUND_DOWN, modifiers: modifiers, _repeat: _repeat)
+            }
             break
         }
+        
+        // Trick onUp to not call Long click when press & turn
+        click_down = Date().timeIntervalSince1970-100
+        rotating = false
     }
 }
